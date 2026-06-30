@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Activities</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/activity.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="activity-page">
+        <nav class="navbar">
+            <h2>User Activities</h2>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/profile">Profile</a>
+                <a href="/recipes">Recipes</a>
+                <a href="/create-recipe">Create Recipe</a>
+                <a href="/my-recipes">My Recipes</a>
+                <a href="/favorites">Favorites</a>
+                <a href="/collections">Collections</a>
+                <a href="/activity-feed">Activity Feed</a>
+                <a href="/my-activities">My Activities</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="activity-content">
+            <div class="activity-header">
+                <h3 id="userActivityTitle">User Activities</h3>
+                <p class="activity-subtitle" id="userActivitySubtitle">Activities by this user</p>
+            </div>
+            
+            <div id="activityList" class="activity-list">
+                <!-- Activities will be rendered here -->
+            </div>
+            
+            <div class="load-more-container" id="loadMoreContainer">
+                <button id="loadMoreBtn" class="load-more-btn">Load More</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/activity.js"></script>
+</body>
+</html>

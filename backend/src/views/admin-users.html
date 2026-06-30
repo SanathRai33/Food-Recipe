@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Users</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="admin-page">
+        <nav class="navbar admin-nav">
+            <h2>Admin Panel</h2>
+            <div class="nav-links">
+                <a href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users" class="active">Users</a>
+                <a href="/admin/recipes">Recipes</a>
+                <a href="/dashboard">Back to App</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-content">
+            <div class="admin-header">
+                <h3>User Management</h3>
+                <p class="admin-subtitle">Manage all registered users</p>
+            </div>
+
+            <div class="admin-controls">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search by username, email, or name...">
+                    <button id="searchBtn">Search</button>
+                </div>
+                <button id="clearSearchBtn" class="clear-btn">Clear</button>
+            </div>
+
+            <div id="usersList" class="users-list">
+                <!-- Users will be rendered here -->
+            </div>
+
+            <div class="pagination" id="pagination">
+                <!-- Pagination will be rendered here -->
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/admin-users.js"></script>
+</body>
+</html>

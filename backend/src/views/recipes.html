@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/recipes.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="recipes-page">
+        <nav class="navbar">
+            <h2>Recipes</h2>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/profile">Profile</a>
+                <a href="/recipes">Recipes</a>
+                <a href="/create-recipe">Create Recipe</a>
+                <a href="/my-recipes">My Recipes</a>
+                <a href="/my-favorites">Favorites</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="recipes-content">
+            <div class="search-filter-section">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search recipes by title, description, or ingredients...">
+                    <button id="searchBtn">Search</button>
+                </div>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="dietaryFilter">Dietary</label>
+                        <select id="dietaryFilter">
+                            <option value="">All</option>
+                            <option value="Vegan">Vegan</option>
+                            <option value="Vegetarian">Vegetarian</option>
+                            <option value="Gluten-free">Gluten-free</option>
+                            <option value="Dairy-free">Dairy-free</option>
+                            <option value="Keto">Keto</option>
+                            <option value="Paleo">Paleo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="difficultyFilter">Difficulty</label>
+                        <select id="difficultyFilter">
+                            <option value="">All</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="maxTime">Max Time (min)</label>
+                        <input type="number" id="maxTime" placeholder="e.g., 60">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="sortBy">Sort By</label>
+                        <select id="sortBy">
+                            <option value="created_at">Newest</option>
+                            <option value="title">Title</option>
+                            <option value="prep_time">Prep Time</option>
+                            <option value="cook_time">Cook Time</option>
+                            <option value="total_time">Total Time</option>
+                        </select>
+                    </div>
+                    
+                    <button id="clearFiltersBtn" class="clear-btn">Clear Filters</button>
+                </div>
+            </div>
+
+            <div id="recipesList" class="recipes-grid"></div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/recipes.js"></script>
+</body>
+</html>

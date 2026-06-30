@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Collection</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/collection-form.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="form-page">
+        <nav class="navbar">
+            <h2>Create New Collection</h2>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/profile">Profile</a>
+                <a href="/recipes">Recipes</a>
+                <a href="/create-recipe">Create Recipe</a>
+                <a href="/my-recipes">My Recipes</a>
+                <a href="/favorites">Favorites</a>
+                <a href="/collections">Collections</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="form-container">
+            <div class="form-card">
+                <h3>Collection Details</h3>
+                <form id="collectionForm">
+                    <div class="form-group">
+                        <label for="name">Collection Name *</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="is_public" checked>
+                            Make this collection public
+                        </label>
+                    </div>
+                    
+                    <div id="formMessage" class="success-message"></div>
+                    <div id="formError" class="error-message"></div>
+                    
+                    <button type="submit" id="submitBtn">Create Collection</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/collections.js"></script>
+</body>
+</html>

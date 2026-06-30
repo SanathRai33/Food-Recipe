@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="admin-page">
+        <nav class="navbar admin-nav">
+            <h2>Admin Panel</h2>
+            <div class="nav-links">
+                <a href="/admin/dashboard" class="active">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/admin/recipes">Recipes</a>
+                <a href="/dashboard">Back to App</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-content">
+            <div class="admin-header">
+                <h3>Dashboard Overview</h3>
+                <p class="admin-subtitle">Welcome to the admin panel</p>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats cards will be rendered here -->
+            </div>
+
+            <div class="recent-activity">
+                <h4>Recent Activities</h4>
+                <div id="recentActivities" class="activity-list">
+                    <!-- Recent activities will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/admin.js"></script>
+</body>
+</html>

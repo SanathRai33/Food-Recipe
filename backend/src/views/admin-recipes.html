@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Recipes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="admin-page">
+        <nav class="navbar admin-nav">
+            <h2>Admin Panel</h2>
+            <div class="nav-links">
+                <a href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/admin/recipes" class="active">Recipes</a>
+                <a href="/dashboard">Back to App</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-content">
+            <div class="admin-header">
+                <h3>Recipe Management</h3>
+                <p class="admin-subtitle">Manage all recipes on the platform</p>
+            </div>
+
+            <div class="admin-controls">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search by title or description...">
+                    <button id="searchBtn">Search</button>
+                </div>
+                <div class="filter-group">
+                    <select id="statusFilter">
+                        <option value="">All</option>
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                    </select>
+                </div>
+                <button id="clearFiltersBtn" class="clear-btn">Clear</button>
+            </div>
+
+            <div id="recipesList" class="recipes-list">
+                <!-- Recipes will be rendered here -->
+            </div>
+
+            <div class="pagination" id="pagination">
+                <!-- Pagination will be rendered here -->
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/admin-recipes.js"></script>
+</body>
+</html>
