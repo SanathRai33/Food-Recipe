@@ -74,6 +74,27 @@ User.belongsToMany(User, {
 User.hasMany(Activity, { foreignKey: 'user_id', as: 'activities' });
 Activity.belongsTo(User, { foreignKey: 'user_id', as: 'User' });
 
+// Favorite relationships
+Favorite.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "User",
+});
+
+User.hasMany(Favorite, {
+    foreignKey: "user_id",
+    as: "favoriteRecipes",
+});
+
+Favorite.belongsTo(Recipe, {
+    foreignKey: "recipe_id",
+    as: "Recipe",
+});
+
+Recipe.hasMany(Favorite, {
+    foreignKey: "recipe_id",
+    as: "favorites",
+});
+
 module.exports = {
     User,
     Recipe,

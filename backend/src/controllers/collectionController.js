@@ -1,6 +1,7 @@
 const Collection = require("../models/Collection");
 const CollectionRecipe = require("../models/CollectionRecipe");
 const Recipe = require("../models/Recipe");
+const User = require("../models/User");
 
 const getCollections = async (req, res) => {
   try {

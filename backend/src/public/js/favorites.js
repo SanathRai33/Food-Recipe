@@ -46,15 +46,16 @@ async function loadFavorites() {
 }
 
 function displayFavorites(container, favorites) {
+
     container.innerHTML = favorites.map(recipe => `
-        <a href="/recipe/${recipe.id}" class="recipe-card">
-            ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.title}">` : ''}
-            <h4>${recipe.title}</h4>
-            <p>${recipe.description ? recipe.description.substring(0, 120) + '...' : ''}</p>
+        <a href="/recipe/${recipe?.Recipe?.id}" class="recipe-card">
+            ${recipe?.Recipe?.image ? `<img src="${recipe?.Recipe?.image}" alt="${recipe?.Recipe?.title}">` : ''}
+            <h4>${recipe?.Recipe?.title}</h4>
+            <p>${recipe?.Recipe?.description ? recipe?.Recipe?.description.substring(0, 120) + '...' : ''}</p>
             <div class="recipe-meta">
-                <span>🕒 ${recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0)} min</span>
-                <span>👤 ${recipe.author?.username || 'Unknown'}</span>
-                ${recipe.difficulty ? `<span>⭐ ${recipe.difficulty}</span>` : ''}
+                <span>🕒 ${recipe?.Recipe?.total_time || (recipe?.Recipe?.prep_time || 0) + (recipe?.Recipe?.cook_time || 0)} min</span>
+                <span>👤 ${recipe?.Recipe?.User?.username || 'Unknown'}</span>
+                ${recipe?.Recipe?.difficulty ? `<span>⭐ ${recipe?.Recipe?.difficulty}</span>` : ''}
                 <span>❤️ Favorited</span>
             </div>
         </a>

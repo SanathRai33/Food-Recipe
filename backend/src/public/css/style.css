@@ -99,3 +99,71 @@ button[type="submit"]:hover {
 .auth-link a:hover {
     text-decoration: underline;
 }
+
+
+/* Menu Wrapper */
+.recipe-menu-wrapper {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+/* Three Dot Button */
+.menu-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    font-size: 20px;
+    color: #555;
+    transition: background 0.2s ease;
+}
+
+.menu-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Dropdown Menu */
+.recipe-menu {
+    position: absolute;
+    top: 42px;
+    right: 0;
+    min-width: 180px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: none;
+    z-index: 100;
+}
+
+/* Show Menu */
+.recipe-menu.show {
+    display: block;
+}
+
+/* Menu Items */
+.recipe-menu button {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 12px 16px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.recipe-menu button:hover {
+    background: #f5f5f5;
+}
+
+.recipe-menu .delete-option {
+    color: #dc2626;
+}
+
+.recipe-menu .delete-option:hover {
+    background: #fee2e2;
+}

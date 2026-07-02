@@ -79,28 +79,25 @@ const getUserById = async (req, res) => {
 };
 
 const getUserRecipes = async (req, res) => {
-  try {
-    const { id } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
     const offset = (page - 1) * limit;
+
     const { count, rows } = await Recipe.findAndCountAll({
-      where: { user_id: id, is_public: true },
-      order: [["created_at", "DESC"]],
-      limit: parseInt(limit),
-      offset: offset,
+        where: {
+            user_id: req.user.id,
+        },
+        order: [["created_at", "DESC"]],
+        limit: Number(limit),
+        offset,
     });
 
     res.json({
-      recipes: rows,
-      total: count,
-      page: parseInt(page),
-      total_pages: Math.ceil(count / limit),
+        recipes: rows,
+        total: count,
+        page: Number(page),
+        total_pages: Math.ceil(count / limit),
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
 };
 
 const getUserFavorites = async (req, res) => {
@@ -128,10 +125,10 @@ const getUserFavorites = async (req, res) => {
 };
 
 module.exports = {
-    getProfile,
-    updateProfile,
-    changePassword,
-    getUserById,
-    getUserRecipes,
-    getUserFavorites,
-}
+  getProfile,
+  updateProfile,
+  changePassword,
+  getUserById,
+  getUserRecipes,
+  getUserFavorites,
+};

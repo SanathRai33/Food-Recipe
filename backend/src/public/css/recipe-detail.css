@@ -142,21 +142,8 @@
   font-size: 18px;
 }
 
-.btn-favorite {
-  padding: 12px 30px;
-  border: 2px solid #667eea;
-  border-radius: 5px;
-  background: transparent;
-  color: #667eea;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 16px;
-  margin: 10px 0;
-}
-
 .btn-favorite:hover:not(:disabled) {
-  background: #667eea;
+  background: #db2777;
   color: white;
   transform: scale(1.02);
 }
@@ -192,6 +179,54 @@
   z-index: 1000;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease;
+}
+
+.recipe-action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-review,
+.btn-rating,
+.btn-favorite {
+    flex: 1;
+    min-width: 170px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all .25s ease;
+}
+
+.btn-review {
+    background: #2563eb;
+    color: #fff;
+}
+
+.btn-review:hover {
+    background: #1d4ed8;
+}
+
+.btn-rating {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.btn-rating:hover {
+    background: #d97706;
+}
+
+.btn-favorite {
+    background: #ec4899;
+    color: #fff;
+}
+
+.btn-favorite:hover {
+    background: #db2777;
 }
 
 @keyframes slideIn {

@@ -161,10 +161,6 @@ const getRecipeById = async (req, res) => {
     // Increment view count
     await recipe.increment("views_count");
 
-    console.log('--------------------------------------------------------------------')
-    console.log(recipe)
-    console.log('--------------------------------------------------------------------')
-
     res.json({ recipe });
   } catch (error) {
     console.error(error);
@@ -201,29 +197,51 @@ const updateRecipe = async (req, res) => {
       is_public,
     } = req.body;
 
+    let parsedIngredients = recipe.ingredients;
+    let parsedInstructions = recipe.instructions;
+    let parsedDietary = recipe.dietary_preferences;
+
+    if (ingredients) {
+      parsedIngredients =
+        typeof ingredients === "string" ? JSON.parse(ingredients) : ingredients;
+    }
+
+    if (instructions) {
+      parsedInstructions =
+        typeof instructions === "string"
+          ? JSON.parse(instructions)
+          : instructions;
+    }
+
+    if (dietary_preferences) {
+      parsedDietary =
+        typeof dietary_preferences === "string"
+          ? JSON.parse(dietary_preferences)
+          : dietary_preferences;
+    }
+
     const total_time = (prep_time || 0) + (cook_time || 0);
 
     await recipe.update({
       title: title || recipe.title,
       description: description || recipe.description,
-      ingredients: ingredients
-        ? Array.isArray(ingredients)
-          ? ingredients
-          : ingredients.split("\n").filter((i) => i.trim())
-        : recipe.ingredients,
-      instructions: instructions
-        ? Array.isArray(instructions)
-          ? instructions
-          : instructions.split("\n").filter((i) => i.trim())
-        : recipe.instructions,
+
+      ingredients: parsedIngredients,
+
+      instructions: parsedInstructions,
+
       prep_time: prep_time || recipe.prep_time,
       cook_time: cook_time || recipe.cook_time,
       total_time,
+
       servings: servings || recipe.servings,
       difficulty: difficulty || recipe.difficulty,
-      dietary_preferences: dietary_preferences || recipe.dietary_preferences,
+
+      dietary_preferences: parsedDietary,
+
       is_public: is_public !== undefined ? is_public : recipe.is_public,
-      image_url: req.file ? req.file.location : recipe.image_url,
+
+      image_url: req.file ? `/uploads/${req.file.filename}` : recipe.image_url,
     });
 
     res.json({

@@ -1,6 +1,7 @@
 const Favorite = require("../models/Favorite");
 const Recipe = require("../models/Recipe");
 const Activity = require("../models/Activity");
+const User = require("../models/User");
 
 const getFavorites = async (req, res) => {
   try {

@@ -13,9 +13,9 @@ router.put("/profile", authenticate, userController.updateProfile);
 
 router.put("/change-password", authenticate, changePasswordValidation, userController.changePassword,);
 
-router.get("/:id", userController.getUserById);
+router.get("/my-recipes", authenticate, userController.getUserRecipes);
 
-router.get("/:id/recipes", userController.getUserRecipes);
+router.get("/:id", userController.getUserById);
 
 router.get("/:id/favorites", userController.getUserFavorites);
 

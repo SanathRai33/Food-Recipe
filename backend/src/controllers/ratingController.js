@@ -1,5 +1,6 @@
 const Rating = require("../models/Rating");
 const Recipe = require("../models/Recipe");
+const User = require("../models/User");
 const { Op } = require("sequelize");
 
 const createOrUpdateRating = async (req, res) => {

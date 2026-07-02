@@ -1,6 +1,7 @@
 const Review = require("../models/Review");
 const Recipe = require("../models/Recipe");
 const Activity = require("../models/Activity");
+const User = require("../models/User");
 
 const getReviewsByRecipe = async (req, res) => {
   try {
