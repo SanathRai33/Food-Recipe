@@ -25,8 +25,6 @@ const Follow = sequelize.define(
   },
   {
     tableName: "follows",
-    underscored: true,
-    timestamps: true,
     validate: {
       notSelfFollow() {
         if (this.follower_id === this.following_id) {

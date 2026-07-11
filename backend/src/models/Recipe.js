@@ -75,11 +75,13 @@ const Recipe = sequelize.define('Recipe', {
     views_count: {
         type: DataTypes.INTEGER,
         defaultValue: 0
+    },
+    favorites_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     }
 }, {
-    tableName: 'recipes',
-    underscored: true,
-    timestamps: true
+    tableName: 'recipes'
 });
 
 module.exports = Recipe;

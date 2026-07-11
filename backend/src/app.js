@@ -1,4 +1,4 @@
-// .evn file configuration
+// .env file configuration
 require("dotenv").config();
 
 // Import libraries
@@ -12,6 +12,9 @@ const path = require("path");
 require("./models");
 const sequelize = require("./config/database");
 const errorHandler = require("./middleware/errorHandler");
+const { sanitizeBody } = require("./middleware/sanitize");
+const { apiLimiter } = require("./middleware/rateLimiter");
+const logger = require("./utils/logger");
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -24,196 +27,192 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const followRoutes = require("./routes/followRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const passwordRoutes = require("./routes/passwordRoutes");
+
+// Import unified review routes
+const reviewRatingRoutes = require("./routes/reviewRatingRoutes");
 
 const app = express();
 
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',') 
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count', 'X-Pagination-Page', 'X-Pagination-Total'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // 24 hours
+};
+
 // Middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-      },
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:", "https://*.s3.amazonaws.com"],
     },
-  }),
-);
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
 app.use(compression());
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morgan("combined"));
 
-// Serve static files
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-app.use("/css", express.static(path.join(__dirname, "public", "css")));
-app.use("/js", express.static(path.join(__dirname, "public", "js")));
+// CORS with specific options
+app.use(cors(corsOptions));
 
-// ============ HTML ROUTES ============
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Auth Routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "login.html"));
-});
+// Logging middleware
+app.use(morgan('combined', {
+  stream: {
+    write: (message) => logger.info(message.trim())
+  }
+}));
 
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "register.html"));
-});
+// Sanitize all incoming data
+app.use(sanitizeBody);
 
-// Dashboard
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "dashboard.html"));
-});
-
-// Profile Routes
-app.get("/profile", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "profile.html"));
-});
-
-app.get("/user/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "profile-view.html"));
-});
-
-// Recipe Routes
-app.get("/recipes", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "recipes.html"));
-});
-
-app.get("/recipe/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "recipe-detail.html"));
-});
-
-app.get("/recipe/:id/reviews", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "recipe-reviews.html"));
-});
-
-app.get("/recipe/:id/ratings", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "recipe-ratings.html"));
-});
-
-app.get("/create-recipe", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "create-recipe.html"));
-});
-
-app.get("/edit-recipe/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "edit-recipe.html"));
-});
-
-app.get("/my-recipes", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "user-recipes.html"));
-});
-
-// Favorite Routes
-app.get("/favorites", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "favorites.html"));
-});
-
-app.get("/my-favorites", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "user-favorites.html"));
-});
-
-// Collection Routes
-app.get("/collections", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "collections.html"));
-});
-
-app.get("/collection/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "collection-detail.html"));
-});
-
-app.get("/create-collection", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "create-collection.html"));
-});
-
-app.get("/edit-collection/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "edit-collection.html"));
-});
-
-// Follow Routes
-app.get("/followers/:userId", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "followers.html"));
-});
-
-app.get("/following/:userId", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "following.html"));
-});
-
-// Activity Routes
-app.get("/activity-feed", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "activity-feed.html"));
-});
-
-app.get("/my-activities", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "my-activities.html"));
-});
-
-app.get("/user-activities/:userId", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "user-activities.html"));
-});
-
-// Admin Routes
-app.get("/admin/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "admin-dashboard.html"));
-});
-
-app.get("/admin/users", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "admin-users.html"));
-});
-
-app.get("/admin/recipes", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "admin-recipes.html"));
-});
+// Rate limiting for all API routes
+app.use('/api', apiLimiter);
 
 // ============ API ROUTES ============
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/recipes", recipeRoutes);
-app.use("/api/favorites", favoriteRoutes);
-app.use("/api/collections", collectionRoutes);
-app.use("/api/ratings", ratingRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/follows", followRoutes);
-app.use("/api/activities", activityRoutes);
-app.use("/api/admin", adminRoutes);
-
-// API check
-app.get("/api", (req, res) => {
+// Health check endpoint
+app.get("/api/health", (req, res) => {
   res.json({
     status: "OK",
     message: "Recipe Platform API is running",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    version: "1.0.0"
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
+// Auth Routes
+app.use("/api/auth", authRoutes);
+
+// User Routes
+app.use("/api/users", userRoutes);
+
+// Recipe Routes
+app.use("/api/recipes", recipeRoutes);
+
+// Favorite Routes
+app.use("/api/favorites", favoriteRoutes);
+
+// Collection Routes
+app.use("/api/collections", collectionRoutes);
+
+// Rating Routes (Legacy - kept for backward compatibility)
+app.use("/api/ratings", ratingRoutes);
+
+// Review Routes (Legacy - kept for backward compatibility)
+app.use("/api/reviews", reviewRoutes);
+
+// Follow Routes
+app.use("/api/follows", followRoutes);
+
+// Activity Routes
+app.use("/api/activities", activityRoutes);
+
+// Admin Routes
+app.use("/api/admin", adminRoutes);
+
+// Password Reset Routes
+app.use("/api/password", passwordRoutes);
+
+// Unified review and rating routes (New)
+app.use("/api/review-ratings", reviewRatingRoutes);
+
+// ============ API 404 Handler ============
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Error handling middleware
+// ============ Frontend Static Files (for production) ============
+// Serve React static files in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React build
+  app.use(express.static(path.join(__dirname, '../../frontend/build')));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/build', 'index.html'));
+  });
+} else {
+  // In development, redirect root to React dev server or just show API info
+  app.get('/', (req, res) => {
+    res.json({
+      message: "Recipe Platform API",
+      status: "Running",
+      environment: process.env.NODE_ENV,
+      documentation: "/api/health",
+      frontend: "React app should be running on http://localhost:3000"
+    });
+  });
+}
+
+// ============ Global Error Handler ============
 app.use(errorHandler);
 
-// Database connection and server start
-const PORT = process.env.PORT || 3000;
+// ============ Database Connection & Server Start ============
+const PORT = process.env.PORT || 5000;
 
-sequelize
-  .sync()
-  .then(() => {
-    const PORT = process.env.PORT || 3000;
+const startServer = async () => {
+  try {
+    // Sync database (alter only in development)
+    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ Database synced successfully");
+    }
+    
+    // Start server
     app.listen(PORT, () => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("📦 Database synced");
-        }
       console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔒 CORS enabled for:`, corsOptions.origin);
+      console.log(`📡 API available at: http://localhost:${PORT}/api`);
+      
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`📦 Serving React frontend from build folder`);
+      } else {
+        console.log(`⚛️ React frontend should be running on http://localhost:3000`);
+      }
     });
-  })
-  .catch((err) => {
-    console.error("Unable to connect to the database:", err);
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
-  });
+  }
+};
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection:', reason);
+  process.exit(1);
+});
+
+// Start the server
+startServer();
 
 module.exports = app;

@@ -45,8 +45,6 @@ const Activity = sequelize.define(
   },
   {
     tableName: "activities",
-    underscored: true,
-    timestamps: true,
   },
 );
 

@@ -34,8 +34,6 @@ const Collection = sequelize.define(
   },
   {
     tableName: "collections",
-    underscored: true,
-    timestamps: true,
   },
 );
 

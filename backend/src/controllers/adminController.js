@@ -2,50 +2,63 @@ const User = require("../models/User");
 const Recipe = require("../models/Recipe");
 const Review = require("../models/Review");
 const Rating = require("../models/Rating");
+const Favorite = require("../models/Favorite");
+const Collection = require("../models/Collection");
+const CollectionRecipe = require("../models/CollectionRecipe");
+const Follow = require("../models/Follow");
+const Activity = require("../models/Activity");
+const RecipeReview = require("../models/RecipeReview");
 const { Op } = require("sequelize");
+const sequelize = require('../config/database');
+const { ApiResponse, sendResponse } = require("../utils/apiResponse");
+const logger = require("../utils/logger");
 
-// Dashboard Stats
 const getStats = async (req, res) => {
   try {
     const totalUsers = await User.count();
+    const bannedUsers = await User.count({ where: { is_banned: true } });
     const totalRecipes = await Recipe.count();
     const totalReviews = await Review.count();
+    const totalFavorites = await Favorite.count();
 
-    const ratings = await Rating.findAll({
-      attributes: ["rating"],
-    });
-    const averageRating =
-      ratings.length > 0
+    // Get average rating from unified reviews if exists
+    let averageRating = 0;
+    try {
+      const ratings = await RecipeReview.findAll({
+        attributes: ["rating"]
+      });
+      averageRating = ratings.length > 0
         ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
         : 0;
+    } catch (e) {
+      // Fallback to legacy ratings
+      const ratings = await Rating.findAll({
+        attributes: ["rating"]
+      });
+      averageRating = ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+    }
 
-    // Recent activities (simplified)
-    const recentActivities = await User.findAll({
-      limit: 5,
-      order: [["created_at", "DESC"]],
-      attributes: ["id", "username", "profile_picture", "created_at"],
-    });
-
-    res.json({
+    const response = ApiResponse.success("Stats fetched successfully", {
       totalUsers,
+      bannedUsers,
       totalRecipes,
       totalReviews,
-      averageRating,
-      recentActivities: recentActivities.map((user) => ({
-        ...user.toJSON(),
-        description: `${user.username} joined RecipeShare`,
-      })),
+      totalFavorites,
+      averageRating: Math.round(averageRating * 10) / 10
     });
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Get stats error:", error);
+    const response = ApiResponse.error("Failed to fetch stats", null, 500);
+    return sendResponse(res, response);
   }
 };
 
-// User Management
 const getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search } = req.query;
+    const { page = 1, limit = 10, search, include_banned = false } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
@@ -58,6 +71,10 @@ const getAllUsers = async (req, res) => {
       ];
     }
 
+    if (include_banned !== 'true' && include_banned !== true) {
+      where.is_banned = false;
+    }
+
     const { count, rows } = await User.findAndCountAll({
       where,
       attributes: { exclude: ["password_hash"] },
@@ -66,15 +83,19 @@ const getAllUsers = async (req, res) => {
       offset: offset,
     });
 
-    res.json({
-      users: rows,
+    const pagination = {
       total: count,
       page: parseInt(page),
       total_pages: Math.ceil(count / limit),
-    });
+      limit: parseInt(limit)
+    };
+
+    const response = ApiResponse.paginated("Users fetched successfully", rows, pagination);
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Get all users error:", error);
+    const response = ApiResponse.error("Failed to fetch users", null, 500);
+    return sendResponse(res, response);
   }
 };
 
@@ -86,74 +107,176 @@ const getUserById = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
     }
 
-    res.json({ user });
+    const response = ApiResponse.success("User fetched successfully", user);
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Get user by id error:", error);
+    const response = ApiResponse.error("Failed to fetch user", null, 500);
+    return sendResponse(res, response);
   }
 };
 
 const banUser = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { id } = req.params;
-    const user = await User.findByPk(id);
+    const { reason } = req.body;
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (id === req.user.id) {
+      const response = ApiResponse.error("Cannot ban yourself", null, 400);
+      return sendResponse(res, response);
     }
 
-    await user.update({ is_banned: true });
+    const user = await User.findByPk(id, { transaction });
 
-    res.json({ message: "User banned successfully" });
+    if (!user) {
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
+    }
+
+    if (user.is_admin) {
+      const response = ApiResponse.error("Cannot ban an admin user", null, 400);
+      return sendResponse(res, response);
+    }
+
+    await user.update({
+      is_banned: true,
+      ban_reason: reason || "No reason provided",
+      banned_at: new Date(),
+      banned_by: req.user.id
+    }, { transaction });
+
+    await transaction.commit();
+
+    const response = ApiResponse.success("User banned successfully", {
+      id: user.id,
+      is_banned: user.is_banned,
+      ban_reason: user.ban_reason,
+      banned_at: user.banned_at
+    });
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    await transaction.rollback();
+    logger.error("Ban user error:", error);
+    const response = ApiResponse.error("Failed to ban user", null, 500);
+    return sendResponse(res, response);
   }
 };
 
 const unbanUser = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { id } = req.params;
-    const user = await User.findByPk(id);
+
+    const user = await User.findByPk(id, { transaction });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
     }
 
-    await user.update({ is_banned: false });
+    await user.update({
+      is_banned: false,
+      ban_reason: null,
+      banned_at: null,
+      banned_by: null
+    }, { transaction });
 
-    res.json({ message: "User unbanned successfully" });
+    await transaction.commit();
+
+    const response = ApiResponse.success("User unbanned successfully", {
+      id: user.id,
+      is_banned: user.is_banned
+    });
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    await transaction.rollback();
+    logger.error("Unban user error:", error);
+    const response = ApiResponse.error("Failed to unban user", null, 500);
+    return sendResponse(res, response);
   }
 };
 
 const deleteUser = async (req, res) => {
+  const t = await sequelize.transaction();
+
   try {
     const { id } = req.params;
-    const user = await User.findByPk(id);
+
+    const user = await User.findByPk(id, { transaction: t });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      await t.rollback(); 
+      return res.status(404).json({
+        message: "User not found",
+      });
     }
 
-    // Don't allow deleting self
     if (id === req.user.id) {
-      return res
-        .status(400)
-        .json({ message: "Cannot delete your own account" });
+      await t.rollback();
+      return res.status(400).json({
+        message: "Cannot delete your own account",
+      });
     }
 
-    await user.destroy();
+    const recipes = await Recipe.findAll({
+      where: { user_id: id },
+      attributes: ['id'], 
+      transaction: t
+    });
+    const recipeIds = recipes.map(r => r.id);
 
-    res.json({ message: "User deleted successfully" });
+    if (recipeIds.length > 0) {
+      await Favorite.destroy({ where: { recipe_id: recipeIds }, transaction: t });
+      await Rating.destroy({ where: { recipe_id: recipeIds }, transaction: t });
+      await Review.destroy({ where: { recipe_id: recipeIds }, transaction: t });
+      await CollectionRecipe.destroy({ where: { recipe_id: recipeIds }, transaction: t });
+      await Activity.destroy({ where: { target_id: recipeIds }, transaction: t });
+      
+      await Recipe.destroy({ where: { user_id: id }, transaction: t });
+    }
+
+    const collections = await Collection.findAll({
+      where: { user_id: id },
+      attributes: ['id'],
+      transaction: t
+    });
+    const collectionIds = collections.map(c => c.id);
+
+    if (collectionIds.length > 0) {
+      await CollectionRecipe.destroy({ where: { collection_id: collectionIds }, transaction: t });
+      await Collection.destroy({ where: { user_id: id }, transaction: t });
+    }
+
+    await Favorite.destroy({ where: { user_id: id }, transaction: t });
+    await Rating.destroy({ where: { user_id: id }, transaction: t });
+    await Review.destroy({ where: { user_id: id }, transaction: t });
+    await Activity.destroy({ where: { user_id: id }, transaction: t });
+    
+    // Follows
+    await Follow.destroy({ where: { follower_id: id }, transaction: t });
+    await Follow.destroy({ where: { following_id: id }, transaction: t });
+
+    await user.destroy({ transaction: t });
+
+    await t.commit();
+
+    return res.json({
+      message: "User deleted successfully",
+    });
+
   } catch (error) {
+    await t.rollback();
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -200,7 +323,6 @@ const removeAdmin = async (req, res) => {
   }
 };
 
-// Recipe Management
 const getAllRecipes = async (req, res) => {
   try {
     const { page = 1, limit = 10, search, status } = req.query;

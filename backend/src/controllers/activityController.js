@@ -1,6 +1,7 @@
 const Activity = require("../models/Activity");
 const Follow = require("../models/Follow");
 const { Op } = require("sequelize");
+const User = require("../models/User");
 
 const getActivityFeed = async (req, res) => {
   try {

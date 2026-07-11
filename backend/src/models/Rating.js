@@ -27,11 +27,16 @@ const Rating = sequelize.define('Rating', {
             min: 1,
             max: 5
         }
+    },
+    review_content: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        validate: {
+            len: [0, 1000]
+        }
     }
 }, {
-    tableName: 'ratings',
-    underscored: true,
-    timestamps: true
+    tableName: 'ratings'
 });
 
 module.exports = Rating;

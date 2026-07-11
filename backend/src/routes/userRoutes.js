@@ -19,4 +19,6 @@ router.get("/:id", userController.getUserById);
 
 router.get("/:id/favorites", userController.getUserFavorites);
 
+router.get("/:id/recipes", userController.getProfileRecipes);
+
 module.exports = router;

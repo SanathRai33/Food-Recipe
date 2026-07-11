@@ -25,8 +25,6 @@ const Favorite = sequelize.define(
   },
   {
     tableName: "favorites",
-    underscored: true,
-    timestamps: true,
   },
 );
 

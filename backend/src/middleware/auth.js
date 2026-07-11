@@ -1,5 +1,6 @@
 const { verifyToken } = require("../config/jwt");
 const User = require("../models/User");
+const { ApiResponse, sendResponse } = require("../utils/apiResponse");
 
 const authenticate = async (req, res, next) => {
   try {
@@ -21,7 +22,15 @@ const authenticate = async (req, res, next) => {
     }
 
     if (user.is_banned) {
-      return res.status(403).json({ message: "Your account has been banned" });
+      const response = ApiResponse.error(
+        "Your account has been banned",
+        {
+          reason: user.ban_reason || "No reason provided",
+          banned_at: user.banned_at
+        },
+        403
+      );
+      return sendResponse(res, response);
     }
 
     req.user = {
@@ -29,14 +38,50 @@ const authenticate = async (req, res, next) => {
       username: user.username,
       email: user.email,
       is_admin: user.is_admin,
-      is_banned: user.is_banned,
+      is_banned: user.is_banned
     };
 
     next();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    const response = ApiResponse.error("Server error", null, 500);
+    return sendResponse(res, response);
   }
 };
 
-module.exports = { authenticate };
+const checkBanned = async (userId) => {
+  try {
+    const user = await User.findByPk(userId);
+    return user && user.is_banned;
+  } catch (error) {
+    return false;
+  }
+};
+
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const decoded = verifyToken(token);
+      
+      if (decoded) {
+        const user = await User.findByPk(decoded.userId);
+        if (user && !user.is_banned) {
+          req.user = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            is_admin: user.is_admin,
+            is_banned: user.is_banned
+          };
+        }
+      }
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
+
+module.exports = { authenticate, checkBanned, optionalAuth };

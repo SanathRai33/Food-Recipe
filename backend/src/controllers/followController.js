@@ -1,32 +1,57 @@
 const Follow = require("../models/Follow");
 const User = require("../models/User");
 const Activity = require("../models/Activity");
+const { ApiResponse, sendResponse } = require("../utils/apiResponse");
+const logger = require("../utils/logger");
+const sequelize = require("../config/database");
 
 const followUser = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { user_id } = req.body;
 
     if (user_id === req.user.id) {
-      return res.status(400).json({ message: "Cannot follow yourself" });
+      const response = ApiResponse.error("Cannot follow yourself", null, 400);
+      return sendResponse(res, response);
     }
 
-    const user = await User.findByPk(user_id);
+    const user = await User.findByPk(user_id, { transaction });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
+    }
+
+    // Check if target user is banned
+    if (user.is_banned) {
+      const response = ApiResponse.error("Cannot follow - user is banned", null, 403);
+      return sendResponse(res, response);
+    }
+
+    // Check if current user is banned
+    const currentUser = await User.findByPk(req.user.id, { transaction });
+    if (currentUser && currentUser.is_banned) {
+      const response = ApiResponse.error("Cannot follow - your account is banned", null, 403);
+      return sendResponse(res, response);
     }
 
     const existing = await Follow.findOne({
-      where: { follower_id: req.user.id, following_id: user_id },
+      where: { 
+        follower_id: req.user.id, 
+        following_id: user_id 
+      },
+      transaction
     });
 
     if (existing) {
-      return res.status(400).json({ message: "Already following this user" });
+      const response = ApiResponse.error("Already following this user", null, 400);
+      return sendResponse(res, response);
     }
 
     const follow = await Follow.create({
       follower_id: req.user.id,
       following_id: user_id,
-    });
+    }, { transaction });
 
     // Create activity
     await Activity.create({
@@ -38,15 +63,17 @@ const followUser = async (req, res) => {
         followed_username: user.username,
         followed_id: user_id,
       },
-    });
+    }, { transaction });
 
-    res.status(201).json({
-      message: "Following user successfully",
-      follow,
-    });
+    await transaction.commit();
+
+    const response = ApiResponse.success("Following user successfully", follow);
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    await transaction.rollback();
+    logger.error("Follow user error:", error);
+    const response = ApiResponse.error("Failed to follow user", null, 500);
+    return sendResponse(res, response);
   }
 };
 
@@ -55,19 +82,25 @@ const unfollowUser = async (req, res) => {
     const { user_id } = req.params;
 
     const follow = await Follow.findOne({
-      where: { follower_id: req.user.id, following_id: user_id },
+      where: { 
+        follower_id: req.user.id, 
+        following_id: user_id 
+      },
     });
 
     if (!follow) {
-      return res.status(404).json({ message: "Not following this user" });
+      const response = ApiResponse.error("Not following this user", null, 404);
+      return sendResponse(res, response);
     }
 
     await follow.destroy();
 
-    res.json({ message: "Unfollowed user successfully" });
+    const response = ApiResponse.success("Unfollowed user successfully");
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Unfollow user error:", error);
+    const response = ApiResponse.error("Failed to unfollow user", null, 500);
+    return sendResponse(res, response);
   }
 };
 
@@ -76,13 +109,20 @@ const checkFollow = async (req, res) => {
     const { user_id } = req.params;
 
     const follow = await Follow.findOne({
-      where: { follower_id: req.user.id, following_id: user_id },
+      where: { 
+        follower_id: req.user.id, 
+        following_id: user_id 
+      },
     });
 
-    res.json({ isFollowing: !!follow });
+    const response = ApiResponse.success("Follow check completed", { 
+      isFollowing: !!follow 
+    });
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Check follow error:", error);
+    const response = ApiResponse.error("Failed to check follow status", null, 500);
+    return sendResponse(res, response);
   }
 };
 
@@ -102,19 +142,26 @@ const getFollowers = async (req, res) => {
             "profile_picture",
             "first_name",
             "last_name",
+            "is_banned"
           ],
         },
       ],
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
     }
 
-    res.json({ followers: user.followers });
+    // Filter out banned users from followers
+    const followers = user.followers.filter(f => !f.is_banned);
+
+    const response = ApiResponse.success("Followers fetched successfully", followers);
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Get followers error:", error);
+    const response = ApiResponse.error("Failed to fetch followers", null, 500);
+    return sendResponse(res, response);
   }
 };
 
@@ -134,26 +181,33 @@ const getFollowing = async (req, res) => {
             "profile_picture",
             "first_name",
             "last_name",
+            "is_banned"
           ],
         },
       ],
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const response = ApiResponse.error("User not found", null, 404);
+      return sendResponse(res, response);
     }
 
-    res.json({ following: user.following });
+    // Filter out banned users from following
+    const following = user.following.filter(f => !f.is_banned);
+
+    const response = ApiResponse.success("Following fetched successfully", following);
+    return sendResponse(res, response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    logger.error("Get following error:", error);
+    const response = ApiResponse.error("Failed to fetch following", null, 500);
+    return sendResponse(res, response);
   }
 };
 
 module.exports = {
-    followUser,
-    unfollowUser,
-    checkFollow,
-    getFollowers,
-    getFollowing
-}
+  followUser,
+  unfollowUser,
+  checkFollow,
+  getFollowers,
+  getFollowing,
+};

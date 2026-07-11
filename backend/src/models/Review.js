@@ -1,43 +1,42 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const Review = sequelize.define(
-  "Review",
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
+const Rating = sequelize.define('Rating', {
     user_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: "users",
-        key: "id",
-      },
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        },
+        primaryKey: true
     },
     recipe_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: "recipes",
-        key: "id",
-      },
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'recipes',
+            key: 'id'
+        },
+        primaryKey: true
     },
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      validate: {
-        len: [1, 1000],
-      },
+    rating: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            min: 1,
+            max: 5
+        }
     },
-  },
-  {
-    tableName: "reviews",
-    underscored: true,
-    timestamps: true,
-  },
-);
+    review_content: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        validate: {
+            len: [0, 1000]
+        }
+    }
+}, {
+    tableName: 'ratings'
+});
 
-module.exports = Review;
+module.exports = Rating;

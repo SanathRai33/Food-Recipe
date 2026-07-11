@@ -26,8 +26,6 @@ const CollectionRecipe = sequelize.define('CollectionRecipe', {
     }
 }, {
     tableName: 'collection_recipes',
-    underscored: true,
-    timestamps: false
 });
 
 module.exports = CollectionRecipe;
